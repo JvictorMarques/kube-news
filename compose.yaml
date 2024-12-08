@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:{POSTGRES_TAG:-12.17}
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres:/var/lib/postgresql/data # Volume gerenciado pelo Docker
+      # - ./postgres:/var/lib/postgresql/data # Volume Bind Mount
+    networks:
+      - database
+
+  kube_news:
+    image: kubedevio/kube_news:${KUBE_NEWS_TAG:-latest}
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: kube_news
+    hostname: kube_news
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_DATABASE=${POSTGRES_DB}
+      - DB_HOST=postgres
+    depends_on:
+      - postgres
+    networks:
+      - database
+
+volumes:
+  postgres:
+    # name: postgres
+
+networks:
+  database:
+    # name: database
+    driver: bridge
